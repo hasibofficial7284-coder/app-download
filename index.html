@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="bn"><head><meta charset="utf-8">
+<html lang="bn">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>অ্যাপ স্টোর</title>
 <style>
@@ -36,77 +38,493 @@ label{font-size:13px;color:var(--mu)}
 .bar{height:14px;border-radius:99px;background:#e3ecff;overflow:hidden;display:none;margin:8px 0}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1558ff,#4d9bff)}
 footer{text-align:center;color:var(--mu);padding:30px 0;font-size:13px}
 @media(max-width:520px){.hero h1{font-size:23px}.two{grid-template-columns:1fr}}
-</style></head><body>
-<header id="hd"><div class="w"><div class="top"><a class="logo" href="#">📱 অ্যাপ স্টোর</a><span id="nav"></span></div>
-<div class="hero"><h1>সেরা অ্যাপ, এক জায়গায়</h1><p>নিরাপদ ও দ্রুত ডাউনলোড করুন</p></div></div></header>
+</style>
+</head>
+<body>
+<header id="hd">
+<div class="w">
+<div class="top">
+<a class="logo" href="#">📱 অ্যাপ স্টোর</a>
+<span id="nav"></span>
+</div>
+<div class="hero">
+<h1>সেরা অ্যাপ, এক জায়গায়</h1>
+<p>নিরাপদ ও দ্রুত ডাউনলোড করুন</p>
+</div>
+</div>
+</header>
+
 <div class="w" id="app"></div>
 <footer>© অ্যাপ স্টোর</footer>
+
 <script>
-const REPO_OVERRIDE='';/* ফাঁকা থাকলে GitHub Pages লিংক থেকে নিজেই রিপোজিটরি চিনে নেবে, যেমন: 'username/repo' */
+const REPO_OVERRIDE='';
 const H=location.hostname,P=location.pathname.split('/')[1]||'',O=H.split('.')[0];
 const REPO=REPO_OVERRIDE||(H.endsWith('.github.io')?O+'/'+(P&&!P.includes('.')?P:H):'');
-const $=s=>document.querySelector(s),CATS=['টুলস','সোশ্যাল','শিক্ষা','বিনোদন','ফটোগ্রাফি','প্রোডাক্টিভিটি'],MAX=1000*1048576;
+const $=s=>document.querySelector(s);
+const CATS=['টুলস','সোশ্যাল','শিক্ষা','বিনোদন','ফটোগ্রাফি','প্রোডাক্টিভিটি'];
+const MAX=1000*1048576;
+
 let apps=[],dc={},tok='',adm=false,cat='সব',q='',edit=null,view='',iconData='';
 try{tok=localStorage.t||''}catch(e){}
+
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const gh=(p,o={})=>fetch('https://api.github.com'+p,{...o,headers:{Accept:'application/vnd.github+json',...(o.body?{'Content-Type':'application/json'}:{}),...(tok?{Authorization:'Bearer '+tok}:{}),...o.headers}});
+
+const gh=(p,o={})=>fetch('https://api.github.com'+p,{
+...o,
+headers:{
+Accept:'application/vnd.github+json',
+...(o.body?{'Content-Type':'application/json'}:{}),
+...(tok?{Authorization:'Bearer '+tok}:{}),
+...o.headers
+}
+});
+
 const fmt=b=>b>=1048576?(b/1048576).toFixed(1)+' MB':(b/1024).toFixed(0)+' KB';
-const icon=(a,c='')=>a.icon?`<img class="ic ${c}" src="${esc(a.icon)}" alt="">`:`<div class="ic ${c}">${esc((a.name||'?')[0])}</div>`;
-async function load(){try{const r=await gh('/repos/'+REPO+'/contents/apps.json',{headers:{Accept:'application/vnd.github.raw+json'}});if(r.ok)apps=JSON.parse(await r.text())}catch(e){}
-try{const r=await gh('/repos/'+REPO+'/releases?per_page=100');if(r.ok){dc={};(await r.json()).forEach(x=>x.assets.forEach(s=>dc[s.browser_download_url]=s.download_count))}}catch(e){}
-if(tok)await verify(true);render()}
-async function verify(quiet){try{const r=await gh('/repos/'+REPO);const j=r.ok?await r.json():null;adm=!!(j&&j.permissions&&j.permissions.push)}catch(e){adm=false}
-if(!adm&&!quiet)alert('টোকেন ঠিক নয় বা এই রিপোজিটরিতে লেখার অনুমতি নেই')}
-async function login(){tok=$('#tk').value.trim();await verify();if(adm){try{localStorage.t=tok}catch(e){}}else tok='';view='';render()}
-function logout(){tok='';adm=false;try{localStorage.removeItem('t')}catch(e){}location.hash='';view='';render()}
-function card(a){return `<div class="card ${a.featured?'f':''}"><div class="row" onclick="location.hash='app-${a.id}'">${icon(a)}<div><div class="nm">${esc(a.name)}</div><div class="mu">v${esc(a.version)} · ${esc(a.size)}</div><div class="mu">⬇ ${dc[a.apkUrl]||0} ডাউনলোড</div></div></div><button class="btn" onclick="dl('${a.id}')">ডাউনলোড</button></div>`}
-function lsHtml(){const l=apps.filter(a=>(cat==='সব'||a.cat===cat)&&(a.name||'').toLowerCase().includes(q.toLowerCase())),f=l.filter(a=>a.featured);
+
+const icon=(a,c='')=>a.icon?
+`<img class="ic ${c}" src="${esc(a.icon)}" alt="">`:
+`<div class="ic ${c}">${esc((a.name||'?')[0])}</div>`;
+
+async function load(){
+try{
+const r=await gh('/repos/'+REPO+'/contents/apps.json',{
+headers:{Accept:'application/vnd.github.raw+json'}
+});
+if(r.ok)apps=JSON.parse(await r.text());
+}catch(e){}
+
+try{
+const r=await gh('/repos/'+REPO+'/releases?per_page=100');
+if(r.ok){
+dc={};
+(await r.json()).forEach(x=>x.assets.forEach(s=>dc[s.browser_download_url]=s.download_count));
+}
+}catch(e){}
+
+if(tok)await verify(true);
+render();
+}
+
+async function verify(quiet){
+try{
+const r=await gh('/repos/'+REPO);
+const j=r.ok?await r.json():null;
+adm=!!(j&&j.permissions&&j.permissions.push);
+}catch(e){adm=false}
+
+if(!adm&&!quiet)alert('টোকেন ঠিক নয় বা এই রিপোজিটরিতে লেখার অনুমতি নেই');
+}
+
+async function login(){
+tok=$('#tk').value.trim();
+await verify();
+if(adm){
+try{localStorage.t=tok}catch(e){}
+}else tok='';
+view='';
+render();
+}
+
+function logout(){
+tok='';
+adm=false;
+try{localStorage.removeItem('t')}catch(e){}
+location.hash='';
+view='';
+render();
+}
+
+function card(a){
+return `<div class="card ${a.featured?'f':''}">
+<div class="row" onclick="location.hash='app-${a.id}'">
+${icon(a)}
+<div>
+<div class="nm">${esc(a.name)}</div>
+<div class="mu">v${esc(a.version)} · ${esc(a.size)}</div>
+<div class="mu">⬇ ${dc[a.apkUrl]||0} ডাউনলোড</div>
+</div>
+</div>
+<button class="btn" onclick="dl('${a.id}')">ডাউনলোড</button>
+</div>`;
+}
+
+function lsHtml(){
+const l=apps.filter(a=>(cat==='সব'||a.cat===cat)&&(a.name||'').toLowerCase().includes(q.toLowerCase()));
+const f=l.filter(a=>a.featured);
+
 if(!REPO)return '<p class="mu" style="padding:40px 0;text-align:center">GitHub Pages-এ চালু করলে অ্যাপ দেখা যাবে।</p>';
+
 if(!apps.length)return `<p class="mu" style="text-align:center;padding:40px 0">এখনো কোনো অ্যাপ নেই।</p>`;
-return (f.length?`<h2>⭐ ফিচার্ড অ্যাপ</h2><div class="grid">${f.map(card).join('')}</div>`:'')+`<h2>সব অ্যাপ</h2><div class="grid">${l.map(card).join('')||'<p class="mu">কিছু পাওয়া যায়নি</p>'}</div>`}
-function home(){return `<div class="sb"><input placeholder="🔍 অ্যাপ খুঁজুন" value="${esc(q)}" oninput="q=this.value;list()"></div><div class="chips">${['সব',...CATS].map(c=>`<button class="chip ${c===cat?'on':''}" onclick="cat='${c}';list()">${c}</button>`).join('')}</div><div id="ls">${lsHtml()}</div>`}
-function list(){const e=$('#ls');if(e){e.innerHTML=lsHtml();document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===cat))}}
-function detail(a){return `<a href="#" style="display:inline-block;margin-top:16px;color:var(--pr);text-decoration:none">← ফিরে যান</a><div class="det"><div class="dh">${icon(a,'big')}<div><h1 style="margin:0">${esc(a.name)}</h1><span class="badge">${esc(a.cat||'')}</span></div></div>
-<div class="meta"><div><b>${esc(a.version)}</b><span class="mu">ভার্সন</span></div><div><b>${esc(a.size)}</b><span class="mu">সাইজ</span></div><div><b>${dc[a.apkUrl]||0}</b><span class="mu">ডাউনলোড</span></div><div><b>${a.updatedAt?new Date(a.updatedAt).toLocaleDateString('bn-BD'):'-'}</b><span class="mu">আপডেট</span></div></div>
-<button class="btn" onclick="dl('${a.id}')" style="padding:13px 30px;font-size:16px">⬇ ডাউনলোড করুন</button><h2>বিস্তারিত</h2><p style="white-space:pre-wrap">${esc(a.desc)||'বিবরণ নেই'}</p></div>`}
-function dl(id){const a=apps.find(x=>x.id===id);if(!a||!a.apkUrl)return alert('APK এখনো যোগ হয়নি');window.open(a.apkUrl,'_blank')}
-function loginView(){return `<div class="det"><h2 style="margin-top:0">🔐 অ্যাডমিন লগইন</h2><label>GitHub টোকেন</label><input id="tk" type="password" placeholder="github_pat_..."><button class="btn" onclick="login()">প্রবেশ করুন</button><p class="mu">টোকেন শুধু এই ডিভাইসে সেভ থাকে।</p></div>`}
-function admin(){return `<div class="top" style="padding:18px 0"><b style="font-size:20px">⚙️ অ্যাডমিন প্যানেল</b><span><a class="btn" href="#">সাইট</a> <button class="btn o" onclick="logout()">লগআউট</button></span></div><div class="det" style="margin-top:0"><h2 style="margin-top:0" id="ft">➕ নতুন অ্যাপ যোগ করুন</h2>
-<div class="two"><div><label>অ্যাপের নাম</label><input id="f_name"></div><div><label>ভার্সন</label><input id="f_ver" placeholder="1.0.0"></div>
-<div><label>সাইজ (লিংক দিলে নিজে লিখুন, যেমন 85 MB)</label><input id="f_size"></div><div><label>ক্যাটাগরি</label><select id="f_cat">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></div></div>
-<label>অ্যাপের ছবি</label><input type="file" id="f_if" accept="image/*" onchange="pickIcon()">
-<label>APK ফাইল (সরাসরি আপলোড, সর্বোচ্চ ১০০০ MB)</label><input type="file" id="f_fa" accept=".apk,application/vnd.android.package-archive" onchange="if(this.files[0])$('#f_size').value=fmt(this.files[0].size)"><label>অথবা APK ডাউনলোড লিংক (বড় ফাইলের জন্য সবচেয়ে নির্ভরযোগ্য)</label><input id="f_apk" placeholder="https://github.com/.../releases/download/...">
-<label>বিস্তারিত বিবরণ</label><textarea id="f_desc" rows="4"></textarea>
-<label><input type="checkbox" id="f_feat" style="width:auto;margin-right:6px">ফিচার্ড অ্যাপ</label><div class="bar" id="bar"><i id="pg"></i></div><div id="msg" class="mu"></div>
-<button class="btn" onclick="save()" id="sv">সংরক্ষণ করুন</button> <button class="btn o" onclick="reset()">বাতিল</button>
-<h2>সব অ্যাপ</h2><div id="al"></div></div>`}
-function admList(){const e=$('#al');if(e)e.innerHTML=apps.map(a=>`<div class="rv row" style="cursor:default;justify-content:space-between;flex-wrap:wrap"><div class="row" style="cursor:default">${icon(a)}<div><div class="nm">${esc(a.name)}</div><div class="mu">v${esc(a.version)} · ⬇ ${dc[a.apkUrl]||0}</div></div></div><div><button class="btn o" onclick="ed('${a.id}')">আপডেট</button> <button class="btn r" onclick="del('${a.id}')">ডিলিট</button></div></div>`).join('')||'<p class="mu">কোনো অ্যাপ নেই</p>'}
-function pickIcon(){const f=$('#f_if').files[0];if(!f)return;const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),s=Math.min(im.width,im.height);x.drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,128,128);iconData=c.toDataURL('image/jpeg',.8)};im.src=URL.createObjectURL(f)}
-function ed(id){const a=apps.find(x=>x.id===id);edit=id;iconData=a.icon||'';const m={f_name:'name',f_ver:'version',f_size:'size',f_cat:'cat',f_desc:'desc',f_apk:'apkUrl'};for(const k in m)$('#'+k).value=a[m[k]]||'';$('#f_feat').checked=!!a.featured;$('#ft').textContent='✏️ আপডেট: '+a.name;scrollTo(0,0)}
-function reset(){edit=null;iconData='';['f_name','f_ver','f_size','f_desc','f_apk'].forEach(i=>$('#'+i).value='');$('#f_feat').checked=false;$('#f_fa').value='';$('#f_if').value='';$('#ft').textContent='➕ নতুন অ্যাপ যোগ করুন'}
+
+return (f.length?`<h2>⭐ ফিচার্ড অ্যাপ</h2><div class="grid">${f.map(card).join('')}</div>`:'')+
+`<h2>সব অ্যাপ</h2><div class="grid">${l.map(card).join('')||'<p class="mu">কিছু পাওয়া যায়নি</p>'}</div>`;
+}
+
+function home(){
+return `<div class="sb"><input placeholder="🔍 অ্যাপ খুঁজুন" value="${esc(q)}" oninput="q=this.value;list()"></div>
+<div class="chips">${['সব',...CATS].map(c=>`<button class="chip ${c===cat?'on':''}" onclick="cat='${c}';list()">${c}</button>`).join('')}</div>
+<div id="ls">${lsHtml()}</div>`;
+}
+
+function list(){
+const e=$('#ls');
+if(e){
+e.innerHTML=lsHtml();
+document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.textContent===cat));
+}
+}
+
+function detail(a){
+return `<a href="#" style="display:inline-block;margin-top:16px;color:var(--pr);text-decoration:none">← ফিরে যান</a>
+<div class="det">
+<div class="dh">${icon(a,'big')}<div>
+<h1 style="margin:0">${esc(a.name)}</h1>
+<span class="badge">${esc(a.cat||'')}</span>
+</div></div>
+<div class="meta">
+<div><b>${esc(a.version)}</b><span class="mu">ভার্সন</span></div>
+<div><b>${esc(a.size)}</b><span class="mu">সাইজ</span></div>
+<div><b>${dc[a.apkUrl]||0}</b><span class="mu">ডাউনলোড</span></div>
+<div><b>${a.updatedAt?new Date(a.updatedAt).toLocaleDateString('bn-BD'):'-'}</b><span class="mu">আপডেট</span></div>
+</div>
+<button class="btn" onclick="dl('${a.id}')" style="padding:13px 30px;font-size:16px">⬇ ডাউনলোড করুন</button>
+<h2>বিস্তারিত</h2>
+<p style="white-space:pre-wrap">${esc(a.desc)||'বিবরণ নেই'}</p>
+</div>`;
+}
+
+function dl(id){
+const a=apps.find(x=>x.id===id);
+if(!a||!a.apkUrl)return alert('APK এখনো যোগ হয়নি');
+window.open(a.apkUrl,'_blank');
+}
+
+function loginView(){
+return `<div class="det">
+<h2 style="margin-top:0">🔐 অ্যাডমিন লগইন</h2>
+<label>GitHub টোকেন</label>
+<input id="tk" type="password" placeholder="github_pat_...">
+<button class="btn" onclick="login()">প্রবেশ করুন</button>
+<p class="mu">টোকেন শুধু এই ডিভাইসে সেভ থাকে।</p>
+</div>`;
+}
+
+function admin(){
+return `<div class="top" style="padding:18px 0">
+<b style="font-size:20px">⚙️ অ্যাডমিন প্যানেল</b>
+<span><a class="btn" href="#">সাইট</a> <button class="btn o" onclick="logout()">লগআউট</button></span>
+</div>
+<div class="det" style="margin-top:0">
+<h2 style="margin-top:0" id="ft">➕ নতুন অ্যাপ যোগ করুন</h2>
+<div class="two">
+<div><label>অ্যাপের নাম</label><input id="f_name"></div>
+<div><label>ভার্সন</label><input id="f_ver" placeholder="1.0.0"></div>
+<div><label>সাইজ (লিংক দিলে নিজে লিখুন, যেমন 85 MB)</label><input id="f_size"></div>
+<div><label>ক্যাটাগরি</label><select id="f_cat">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+</div>
+<label>অ্যাপের ছবি</label>
+<input type="file" id="f_if" accept="image/*" onchange="pickIcon()">
+<label>APK ফাইল (সরাসরি আপলোড, সর্বোচ্চ ১০০০ MB)</label>
+<input type="file" id="f_fa" accept=".apk,application/vnd.android.package-archive" onchange="if(this.files[0])$('#f_size').value=fmt(this.files[0].size)">
+<label>অথবা APK ডাউনলোড লিংক (বড় ফাইলের জন্য সবচেয়ে নির্ভরযোগ্য)</label>
+<input id="f_apk" placeholder="https://github.com/.../releases/download/...">
+<label>বিস্তারিত বিবরণ</label>
+<textarea id="f_desc" rows="4"></textarea>
+<label><input type="checkbox" id="f_feat" style="width:auto;margin-right:6px">ফিচার্ড অ্যাপ</label>
+<div class="bar" id="bar"><i id="pg"></i></div>
+<div id="msg" class="mu"></div>
+<button class="btn" onclick="save()" id="sv">সংরক্ষণ করুন</button>
+<button class="btn o" onclick="reset()">বাতিল</button>
+<h2>সব অ্যাপ</h2>
+<div id="al"></div>
+</div>`;
+}
+
+function admList(){
+const e=$('#al');
+if(e)e.innerHTML=apps.map(a=>`<div class="rv row" style="cursor:default;justify-content:space-between;flex-wrap:wrap">
+<div class="row" style="cursor:default">${icon(a)}
+<div><div class="nm">${esc(a.name)}</div><div class="mu">v${esc(a.version)} · ⬇ ${dc[a.apkUrl]||0}</div></div>
+</div>
+<div>
+<button class="btn o" onclick="ed('${a.id}')">আপডেট</button>
+<button class="btn r" onclick="del('${a.id}')">ডিলিট</button>
+</div>
+</div>`).join('')||'<p class="mu">কোনো অ্যাপ নেই</p>';
+}
+
+function pickIcon(){
+const f=$('#f_if').files[0];
+if(!f)return;
+const im=new Image();
+im.onload=()=>{
+const c=document.createElement('canvas');
+c.width=c.height=128;
+const x=c.getContext('2d'),s=Math.min(im.width,im.height);
+x.drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,128,128);
+iconData=c.toDataURL('image/jpeg',.8);
+};
+im.src=URL.createObjectURL(f);
+}
+
+function ed(id){
+const a=apps.find(x=>x.id===id);
+edit=id;
+iconData=a.icon||'';
+const m={f_name:'name',f_ver:'version',f_size:'size',f_cat:'cat',f_desc:'desc',f_apk:'apkUrl'};
+for(const k in m)$('#'+k).value=a[m[k]]||'';
+$('#f_feat').checked=!!a.featured;
+$('#ft').textContent='✏️ আপডেট: '+a.name;
+scrollTo(0,0);
+}
+
+function reset(){
+edit=null;
+iconData='';
+['f_name','f_ver','f_size','f_desc','f_apk'].forEach(i=>$('#'+i).value='');
+$('#f_feat').checked=false;
+$('#f_fa').value='';
+$('#f_if').value='';
+$('#ft').textContent='➕ নতুন অ্যাপ যোগ করুন';
+}
+
 const say=t=>$('#msg').textContent=t;
-async function saveList(m){const g=await gh('/repos/'+REPO+'/contents/apps.json');const sha=g.ok?(await g.json()).sha:undefined;
-const r=await gh('/repos/'+REPO+'/contents/apps.json',{method:'PUT',body:JSON.stringify({message:m,content:btoa(unescape(encodeURIComponent(JSON.stringify(apps)))),sha})});if(!r.ok)throw new Error('তালিকা সংরক্ষণ ব্যর্থ ('+r.status+')')}
-async function upApk(f,tag,name){const r=await gh('/repos/'+REPO+'/releases',{method:'POST',body:JSON.stringify({tag_name:tag,name})});
-if(!r.ok)throw new Error(r.status===422?'এই ভার্সন আগে থেকেই আছে, নতুন ভার্সন নম্বর দিন':'রিলিজ তৈরি ব্যর্থ ('+r.status+')');
-const rel=await r.json(),u=rel.upload_url.replace(/\{.*$/,'')+'?name='+encodeURIComponent(f.name);$('#bar').style.display='block';
-const url=await new Promise((ok,no)=>{const x=new XMLHttpRequest();x.open('POST',u);x.setRequestHeader('Authorization','Bearer '+tok);x.setRequestHeader('Content-Type','application/vnd.android.package-archive');
-x.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);$('#pg').style.width=p+'%';say('APK আপলোড হচ্ছে... '+p+'% ('+(e.loaded/1048576).toFixed(0)+' / '+(e.total/1048576).toFixed(0)+' MB)')}};
-x.onload=()=>x.status<300?ok(JSON.parse(x.responseText).browser_download_url):no(new Error('আপলোড ব্যর্থ ('+x.status+')'));x.onerror=()=>no(new Error('সরাসরি আপলোড হয়নি (ব্রাউজার আটকে দিয়েছে)। GitHub Releases পাতায় APK আপলোড করে নিচের লিংক ঘরে লিংক বসান'));x.send(f)});
-return{url,relId:rel.id}}
-async function save(){const n=$('#f_name').value.trim(),v=$('#f_ver').value.trim();if(!n||!v)return alert('নাম ও ভার্সন দিন');const f=$('#f_fa').files[0];
-if(f&&f.size>MAX)return alert('ফাইল ১০০০ MB-র বেশি');const lk=$('#f_apk').value.trim();if(!edit&&!f&&!lk)return alert('APK ফাইল বাছাই করুন বা লিংক দিন');
-$('#sv').disabled=true;const old=apps.find(x=>x.id===edit),a=old||{id:Date.now().toString(36)};
-try{Object.assign(a,{name:n,version:v,size:$('#f_size').value.trim(),cat:$('#f_cat').value,desc:$('#f_desc').value.trim(),featured:$('#f_feat').checked,icon:iconData,updatedAt:Date.now()});
-if(lk){a.apkUrl=lk;a.relId=null}else if(f){say('প্রস্তুতি...');const u=await upApk(f,('v-'+a.id+'-'+v).replace(/[^A-Za-z0-9._-]/g,'-'),n+' '+v);a.apkUrl=u.url;a.relId=u.relId}
-if(!old)apps.unshift(a);say('তালিকা সংরক্ষণ হচ্ছে...');await saveList((old?'update ':'add ')+n);say('✅ সংরক্ষিত হয়েছে');reset();admList()}
-catch(e){if(!old)apps=apps.filter(x=>x!==a);say('❌ '+e.message)}$('#sv').disabled=false}
-async function del(id){const a=apps.find(x=>x.id===id);if(!confirm('"'+a.name+'" ডিলিট করবেন?'))return;apps=apps.filter(x=>x.id!==id);
-try{await saveList('delete '+a.name);if(a.relId)gh('/repos/'+REPO+'/releases/'+a.relId,{method:'DELETE'});admList()}catch(e){apps.push(a);alert(e.message)}}
-function render(){const h=location.hash,m=h.match(/^#app-(.+)$/),a=m&&apps.find(x=>x.id===m[1]);
-$('#nav').innerHTML=adm&&h!=='#admin'?'<a class="btn g" href="#admin">⚙️ অ্যাডমিন</a>':'';
-const k=h==='#admin'?(adm?'admin':'login'):a?'det'+a.id:m?'wait':'home';$('#hd').style.display=k==='admin'?'none':'';
-if(k!==view){view=k;$('#app').innerHTML=k==='admin'?admin():k==='login'?loginView():k.startsWith('det')?detail(a):k==='wait'?'<p class="mu" style="padding:40px 0">লোড হচ্ছে...</p>':home();scrollTo(0,0)}
-if(k==='admin')admList();else if(k==='home')list()}
-addEventListener('hashchange',render);render();load();
-</script></body></html>
+
+async function saveList(m){
+const g=await gh('/repos/'+REPO+'/contents/apps.json');
+const sha=g.ok?(await g.json()).sha:undefined;
+
+const r=await gh('/repos/'+REPO+'/contents/apps.json',{
+method:'PUT',
+body:JSON.stringify({
+message:m,
+content:btoa(unescape(encodeURIComponent(JSON.stringify(apps)))),
+sha
+})
+});
+
+if(!r.ok)throw new Error('তালিকা সংরক্ষণ ব্যর্থ ('+r.status+')');
+}
+
+/* শুধুমাত্র APK আপলোড ফাংশন উন্নত করা হয়েছে */
+async function upApk(f,tag,name){
+
+const r=await gh('/repos/'+REPO+'/releases',{
+method:'POST',
+body:JSON.stringify({
+tag_name:tag,
+name:name
+})
+});
+
+if(!r.ok){
+const err=await r.json().catch(()=>({}));
+throw new Error(err.message||'রিলিজ তৈরি ব্যর্থ ('+r.status+')');
+}
+
+const rel=await r.json();
+const u=rel.upload_url.replace(/\{.*$/,'')+'?name='+encodeURIComponent(f.name);
+
+$('#bar').style.display='block';
+$('#pg').style.width='0%';
+
+const url=await new Promise((ok,no)=>{
+
+const x=new XMLHttpRequest();
+
+x.open('POST',u);
+x.timeout=60*60*1000;
+
+x.setRequestHeader('Authorization','Bearer '+tok);
+x.setRequestHeader('Accept','application/vnd.github+json');
+x.setRequestHeader('Content-Type','application/octet-stream');
+
+x.upload.onprogress=e=>{
+if(e.lengthComputable){
+const p=Math.round(e.loaded/e.total*100);
+$('#pg').style.width=p+'%';
+say('APK আপলোড হচ্ছে... '+p+'% ('+
+(e.loaded/1048576).toFixed(0)+' / '+
+(e.total/1048576).toFixed(0)+' MB)');
+}
+};
+
+x.onload=()=>{
+if(x.status>=200&&x.status<300){
+try{
+const result=JSON.parse(x.responseText);
+if(!result.browser_download_url){
+no(new Error('ডাউনলোড লিংক পাওয়া যায়নি'));
+return;
+}
+ok(result.browser_download_url);
+}catch(e){
+no(new Error('GitHub সার্ভারের উত্তর বুঝতে সমস্যা হয়েছে'));
+}
+}else{
+let message='আপলোড ব্যর্থ ('+x.status+')';
+try{
+const err=JSON.parse(x.responseText);
+if(err.message)message+=': '+err.message;
+}catch(e){}
+no(new Error(message));
+}
+};
+
+x.onerror=()=>{
+no(new Error('নেটওয়ার্ক সংযোগ বা CORS সমস্যা। ইন্টারনেট ও GitHub API সংযোগ পরীক্ষা করুন।'));
+};
+
+x.ontimeout=()=>{
+no(new Error('আপলোডের সময় শেষ হয়েছে। আবার চেষ্টা করুন।'));
+};
+
+x.onabort=()=>{
+no(new Error('আপলোড বন্ধ হয়ে গেছে।'));
+};
+
+try{
+x.send(f);
+}catch(e){
+no(new Error('ফাইল পাঠানো যায়নি: '+e.message));
+}
+
+});
+
+return{
+url,
+relId:rel.id
+};
+}
+
+async function save(){
+
+const n=$('#f_name').value.trim();
+const v=$('#f_ver').value.trim();
+
+if(!n||!v)return alert('নাম ও ভার্সন দিন');
+
+const f=$('#f_fa').files[0];
+
+if(f&&f.size>MAX)return alert('ফাইল ১০০০ MB-র বেশি');
+
+const lk=$('#f_apk').value.trim();
+
+if(!edit&&!f&&!lk)return alert('APK ফাইল বাছাই করুন বা লিংক দিন');
+
+$('#sv').disabled=true;
+
+const old=apps.find(x=>x.id===edit);
+const a=old||{id:Date.now().toString(36)};
+
+try{
+
+Object.assign(a,{
+name:n,
+version:v,
+size:$('#f_size').value.trim(),
+cat:$('#f_cat').value,
+desc:$('#f_desc').value.trim(),
+featured:$('#f_feat').checked,
+icon:iconData,
+updatedAt:Date.now()
+});
+
+if(lk){
+a.apkUrl=lk;
+a.relId=null;
+}else if(f){
+say('প্রস্তুতি...');
+const u=await upApk(
+f,
+('v-'+a.id+'-'+v).replace(/[^A-Za-z0-9._-]/g,'-'),
+n+' '+v
+);
+a.apkUrl=u.url;
+a.relId=u.relId;
+}
+
+if(!old)apps.unshift(a);
+
+say('তালিকা সংরক্ষণ হচ্ছে...');
+await saveList((old?'update ':'add ')+n);
+
+say('✅ সংরক্ষিত হয়েছে');
+reset();
+admList();
+
+}catch(e){
+
+if(!old)apps=apps.filter(x=>x!==a);
+say('❌ '+e.message);
+
+}
+
+$('#sv').disabled=false;
+}
+
+async function del(id){
+
+const a=apps.find(x=>x.id===id);
+
+if(!confirm('"'+a.name+'" ডিলিট করবেন?'))return;
+
+apps=apps.filter(x=>x.id!==id);
+
+try{
+
+await saveList('delete '+a.name);
+
+if(a.relId)gh('/repos/'+REPO+'/releases/'+a.relId,{method:'DELETE'});
+
+admList();
+
+}catch(e){
+
+apps.push(a);
+alert(e.message);
+
+}
+}
+
+function render(){
+
+const h=location.hash;
+const m=h.match(/^#app-(.+)$/);
+const a=m&&apps.find(x=>x.id===m[1]);
+
+$('#nav').innerHTML=adm&&h!=='#admin'?
+'<a class="btn g" href="#admin">⚙️ অ্যাডমিন</a>':'';
+
+const k=h==='#admin'?(adm?'admin':'login'):
+a?'det'+a.id:m?'wait':'home';
+
+$('#hd').style.display=k==='admin'?'none':'';
+
+if(k!==view){
+
+view=k;
+
+$('#app').innerHTML=
+k==='admin'?admin():
+k==='login'?loginView():
+k.startsWith('det')?detail(a):
+k==='wait'?'<p class="mu" style="padding:40px 0">লোড হচ্ছে...</p>':
+home();
+
+scrollTo(0,0);
+}
+
+if(k==='admin')admList();
+else if(k==='home')list();
+
+}
+
+addEventListener('hashchange',render);
+render();
+load();
+
+</script>
+</body>
+</html>
